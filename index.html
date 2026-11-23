@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Commission Website Builder TH</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#e9e9ed;color:#222;font-family:'Kanit',sans-serif;font-weight:400}
+header{background:#242424;color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:10}
+header strong{font-weight:600;flex:1}button{font:inherit;cursor:pointer;border:1px solid #d5d5d8;border-radius:10px;padding:8px 12px;background:#fff;color:#222}
+button.primary{background:#222;color:#fff;border-color:#222}button.danger{color:#c22}button.small{padding:5px 8px;font-size:14px}
+main{display:grid;grid-template-columns:minmax(320px,430px) minmax(300px,1fr);gap:14px;padding:14px;align-items:start}
+.panel{background:#fff;border:1px solid #ddd;border-radius:16px;padding:12px;max-height:calc(100vh - 92px);overflow:auto}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tabs button.active{background:#222;color:white}
+.section{border:1px solid #e1e1e4;border-radius:12px;padding:10px;margin:9px 0}
+.row{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.row>*{flex:1;min-width:90px}
+label{display:block;font-size:14px;margin:8px 0 3px;color:#555}
+input,select,textarea{font:inherit;width:100%;border:1px solid #ccc;border-radius:9px;padding:8px;background:#fff;color:#222}
+input[type=color]{padding:3px;height:40px}input[type=range]{padding:0}input[type=file]{font-size:13px}
+h3,h4{margin:5px 0 8px}.blockrow{display:flex;gap:6px;align-items:center;border:1px solid #ddd;border-radius:10px;padding:8px;margin:7px 0}.blockrow span{flex:1;overflow-wrap:anywhere}
+.previewwrap{position:sticky;top:75px;background:#d7d7da;border-radius:16px;padding:14px;max-height:calc(100vh - 90px);overflow:auto}
+.preview{background:#fff;min-height:80vh;border-radius:18px;overflow:hidden;margin:auto;max-width:900px;box-shadow:0 2px 10px #0001}
+.sitehead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:18px;flex-wrap:wrap;border-bottom:1px solid #eee}
+.sitehead .brand{font-size:24px;font-weight:600}.nav{display:flex;gap:12px;flex-wrap:wrap}
+.sitebody{padding:18px;min-height:65vh}
+.pblock{position:relative;margin:10px 0;padding:5px;overflow-wrap:anywhere}
+.pblock.selected{outline:2px dashed #6a8cff;outline-offset:2px}
+.pblock h1,.pblock h2,.pblock h3,.pblock p{margin:0 0 8px}
+.media{display:block;max-width:100%;height:auto;border-radius:8px}
+.choice{display:flex;flex-direction:column;gap:7px}.choice label{color:inherit;display:flex;gap:7px;align-items:center;margin:0}.choice input{width:auto}
+.decor{display:inline-block}.video{max-width:100%}
+@media(max-width:760px){main{grid-template-columns:1fr}.panel{max-height:none}.previewwrap{position:relative;top:auto;max-height:none}.preview{min-height:65vh}}
+</style></head>
+<body>
+<header><strong>✦ ตัวสร้างเว็บ Commission</strong><button onclick="saveDraft()">บันทึกงาน</button><button class="primary" onclick="exportSite()">ส่งออกเว็บไซต์</button></header>
+<main>
+<div class="panel">
+<div class="tabs">
+<button class="active" onclick="tab('pages',this)">หน้า / องค์ประกอบ</button>
+<button onclick="tab('content',this)">เนื้อหา</button>
+<button onclick="tab('style',this)">ตกแต่ง</button>
+<button onclick="tab('layout',this)">เลย์เอาต์</button>
+</div>
+<div id="editor"></div>
+</div>
+<div class="previewwrap"><div class="preview" id="preview"></div></div>
+</main>
+<script>
+const starter={brand:'YOUR ART NAME',pages:[{name:'หน้าหลัก',blocks:[
+{type:'heading',text:'Commission',level:1},{type:'text',text:'ยินดีต้อนรับ! กรุณาอ่านรายละเอียดและเลือก YCH ที่ต้องการ'},{type:'gallery',items:[{title:'YCH 01',price:'150',url:''},{title:'YCH 02',price:'200',url:''}]},{type:'button',text:'สั่งงาน',url:'#order'},{type:'form',title:'แบบฟอร์มสั่งงาน',fields:[{label:'ชื่อผู้สั่ง',type:'text',options:[]},{label:'เลือก YCH',type:'select',options:['YCH 01','YCH 02']},{label:'รายละเอียด',type:'textarea',options:[]}]}
+]},{name:'TOS',blocks:[{type:'heading',text:'Terms of Service',level:1},{type:'text',text:'กรุณาอ่านข้อตกลงก่อนสั่งงาน'}]}]};
+let data=JSON.parse(localStorage.getItem('commissionBuilderTH')||'null')||starter;
+let page=0,selected=-1,activeTab='pages';
+function cur(){return data.pages[page]}
+function tab(t,b){activeTab=t;document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderEditor()}
+function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function renderEditor(){let e=document.getElementById('editor');if(activeTab==='pages'){e.innerHTML=`<h3>หน้าเว็บ</h3>${data.pages.map((p,i)=>`<div class="blockrow"><span>${esc(p.name)}</span><button class="small" onclick="goPage(${i})">แก้ไข</button><button class="small" onclick="movePage(${i},-1)">↑</button><button class="small" onclick="movePage(${i},1)">↓</button><button class="small danger" onclick="delPage(${i})">×</button></div>`).join('')}<button onclick="addPage()">＋ เพิ่มหน้า</button><hr><h3>องค์ประกอบใน: ${esc(cur().name)}</h3>${cur().blocks.map((b,i)=>`<div class="blockrow"><span>${i+1}. ${esc(blockName(b.type))}${b.text?' — '+esc(b.text.slice(0,30)):''}</span><button class="small" onclick="selectBlock(${i})">เลือก</button><button class="small" onclick="moveBlock(${i},-1)">↑</button><button class="small" onclick="moveBlock(${i},1)">↓</button><button class="small danger" onclick="delBlock(${i})">×</button></div>`).join('')}<div class="row">${['heading','text','image','gallery','button','form','video','decor'].map(t=>`<button onclick="addBlock('${t}')">＋ ${blockName(t)}</button>`).join('')}</div>`}
+else if(activeTab==='content'){if(selected<0||!cur().blocks[selected]){e.innerHTML='<p>เลือกองค์ประกอบจากแท็บหน้า / องค์ประกอบก่อน</p>';return}let b=cur().blocks[selected];e.innerHTML=`<h3>แก้ไขเนื้อหา: ${blockName(b.type)}</h3>${b.text!==undefined?`<label>ข้อความ</label><textarea rows="4" onchange="setB('text',this.value)">${esc(b.text)}</textarea>`:''}${b.title!==undefined?`<label>ชื่อ/หัวข้อ</label><input value="${esc(b.title)}" onchange="setB('title',this.value)">`:''}${b.level?`<label>ระดับหัวข้อ</label><select onchange="setB('level',+this.value)">${[1,2,3,4].map(n=>`<option ${b.level===n?'selected':''} value="${n}">H${n}</option>`).join('')}</select>`:''}${b.url!==undefined?`<label>ลิงก์ปุ่ม</label><input value="${esc(b.url)}" onchange="setB('url',this.value)">`:''}${b.price!==undefined?`<label>ราคา</label><input value="${esc(b.price)}" onchange="setB('price',this.value)">`:''}${b.type==='gallery'?galleryEditor(b):''}${b.type==='form'?formEditor(b):''}${b.type==='image'||b.type==='video'||b.type==='decor'?mediaEditor(b):''}`}
+else if(activeTab==='style'){e.innerHTML=`<h3>ตกแต่งเว็บไซต์</h3><label>ชื่อแบรนด์</label><input value="${esc(data.brand)}" onchange="data.brand=this.value;renderPreview()"><label>ฟอนต์</label><select onchange="data.font=this.value;renderPreview()"><option value="Kanit">Kanit</option></select><label>ความหนาฟอนต์</label><select onchange="data.weight=this.value;renderPreview()">${[100,200,300,400,500,600,700,800,900].map(w=>`<option value="${w}" ${(data.weight||400)==w?'selected':''}>${w}</option>`).join('')}</select><label>สีพื้นเว็บ</label><input type=color value="${data.bg||'#ffffff'}" onchange="data.bg=this.value;renderPreview()"><label>สีข้อความ</label><input type=color value="${data.textColor||'#262626'}" onchange="data.textColor=this.value;renderPreview()"><label>สีเน้น / ปุ่ม</label><input type=color value="${data.accent||'#222222'}" onchange="data.accent=this.value;renderPreview()"><label>ความมนของเว็บ</label><input type=range min=0 max=40 value="${data.radius||18}" oninput="data.radius=this.value;renderPreview()"><label>ระยะขอบเนื้อหา</label><input type=range min=0 max=60 value="${data.padding||18}" oninput="data.padding=this.value;renderPreview()">`}
+else{if(selected<0||!cur().blocks[selected]){e.innerHTML='<p>เลือกองค์ประกอบก่อนเพื่อปรับเลย์เอาต์</p>';return}let b=cur().blocks[selected];b.layout=b.layout||{};e.innerHTML=`<h3>ปรับเลย์เอาต์</h3><label>ความกว้าง (%)</label><input type=range min=10 max=100 value="${b.layout.width||100}" oninput="setLayout('width',this.value)"><label>จัดตำแหน่ง</label><select onchange="setLayout('align',this.value)"><option ${b.layout.align==='left'?'selected':''} value=left>ซ้าย</option><option ${b.layout.align==='center'?'selected':''} value=center>กลาง</option><option ${b.layout.align==='right'?'selected':''} value=right>ขวา</option></select><label>ระยะห่างด้านบน/ล่าง</label><input type=range min=0 max=60 value="${b.layout.margin||10}" oninput="setLayout('margin',this.value)"><label>ขนาดตัวอักษร</label><input type=range min=10 max=80 value="${b.layout.size||24}" oninput="setLayout('size',this.value)"><label>ความสูง (px; 0=อัตโนมัติ)</label><input type=range min=0 max=600 value="${b.layout.height||0}" oninput="setLayout('height',this.value)"><label>สีพื้นองค์ประกอบ</label><input type=color value="${b.layout.bg||'#ffffff'}" oninput="setLayout('bg',this.value)"><label>สีเส้นขอบ</label><input type=color value="${b.layout.border||'#dddddd'}" oninput="setLayout('border',this.value)"><label>ความหนาขอบ (px)</label><input type=range min=0 max=12 value="${b.layout.borderWidth||0}" oninput="setLayout('borderWidth',this.value)"><label>ความมนขอบ (px)</label><input type=range min=0 max=50 value="${b.layout.radius||8}" oninput="setLayout('radius',this.value)"><label>ระยะภายใน (px)</label><input type=range min=0 max=40 value="${b.layout.pad||5}" oninput="setLayout('pad',this.value)">`}
+}
+function blockName(t){return({heading:'หัวข้อ',text:'ข้อความ',image:'รูปภาพ',gallery:'แกลเลอรี YCH',button:'ปุ่ม',form:'แบบฟอร์ม',video:'วิดีโอ / GIF',decor:'ของตกแต่ง'})[t]||t}
+function goPage(i){page=i;selected=-1;renderEditor();renderPreview()}
+function addPage(){let n=prompt('ชื่อหน้าใหม่');if(n){data.pages.push({name:n,blocks:[]});page=data.pages.length-1;renderEditor();renderPreview()}}
+function delPage(i){if(data.pages.length<2)return alert('ต้องมีอย่างน้อยหนึ่งหน้า');data.pages.splice(i,1);page=Math.min(page,data.pages.length-1);renderEditor();renderPreview()}
+function movePage(i,d){let j=i+d;if(j<0||j>=data.pages.length)return;[data.pages[i],data.pages[j]]=[data.pages[j],data.pages[i]];page=j;renderEditor();renderPreview()}
+function addBlock(t){let b={type:t,layout:{}};if(t==='heading')Object.assign(b,{text:'หัวข้อใหม่',level:2});if(t==='text')b.text='เพิ่มข้อความ';if(t==='button')Object.assign(b,{text:'กดที่นี่',url:'#',color:'#222',textColor:'#fff',radius:10});if(t==='gallery')b.items=[{title:'YCH ใหม่',price:'',url:''}];if(t==='form')Object.assign(b,{title:'แบบฟอร์มสั่งงาน',fields:[{label:'ช่องใหม่',type:'text',options:[]} ]});if(t==='image'||t==='video'||t==='decor')Object.assign(b,{url:'',caption:''});cur().blocks.push(b);selected=cur().blocks.length-1;renderEditor();renderPreview()}
+function selectBlock(i){selected=i;renderEditor();renderPreview()}
+function delBlock(i){cur().blocks.splice(i,1);selected=-1;renderEditor();renderPreview()}
+function moveBlock(i,d){let j=i+d;if(j<0||j>=cur().blocks.length)return;[cur().blocks[i],cur().blocks[j]]=[cur().blocks[j],cur().blocks[i]];selected=j;renderEditor();renderPreview()}
+function setB(k,v){cur().blocks[selected][k]=v;renderPreview()}
+function setLayout(k,v){cur().blocks[selected].layout[k]=v;renderPreview()}
+function galleryEditor(b){return `<h4>รายการ YCH</h4>${b.items.map((it,i)=>`<div class=section><label>ชื่อรายการ</label><input value="${esc(it.title)}" onchange="bItem(${i},'title',this.value)"><label>ราคา</label><input value="${esc(it.price)}" onchange="bItem(${i},'price',this.value)"><label>URL รูป (หรืออัปโหลด)</label><input value="${esc(it.url)}" onchange="bItem(${i},'url',this.value)"><input type=file accept=image/* onchange="uploadGallery(${i},this.files[0])"><button class=danger onclick="cur().blocks[selected].items.splice(${i},1);renderEditor();renderPreview()">ลบรายการ</button></div>`).join('')}<button onclick="cur().blocks[selected].items.push({title:'YCH ใหม่',price:'',url:''});renderEditor();renderPreview()">＋ เพิ่ม YCH</button>`}
+function bItem(i,k,v){cur().blocks[selected].items[i][k]=v;renderPreview()}
+function uploadGallery(i,f){if(!f)return;readFile(f,url=>{cur().blocks[selected].items[i].url=url;renderEditor();renderPreview()})}
+function formEditor(b){return `<h4>ช่องกรอก / ตัวเลือก</h4>${b.fields.map((f,i)=>`<div class=section><label>ชื่อช่อง</label><input value="${esc(f.label)}" onchange="fieldSet(${i},'label',this.value)"><label>ชนิดช่อง</label><select onchange="fieldSet(${i},'type',this.value)">${['text','textarea','select','radio','checkbox'].map(t=>`<option value="${t}" ${f.type===t?'selected':''}>${({text:'ข้อความสั้น',textarea:'ข้อความยาว',select:'เมนูเลือก',radio:'เลือกหนึ่งข้อ',checkbox:'เลือกได้หลายข้อ'})[t]}</option>`).join('')}</select>${['select','radio','checkbox'].includes(f.type)?`<label>ตัวเลือก (หนึ่งรายการต่อบรรทัด)</label><textarea rows=3 onchange="fieldSet(${i},'options',this.value.split('\\n').filter(x=>x.trim()))">${esc((f.options||[]).join('\\n'))}</textarea>`:''}<button class=danger onclick="cur().blocks[selected].fields.splice(${i},1);renderEditor();renderPreview()">ลบช่อง</button></div>`).join('')}<button onclick="cur().blocks[selected].fields.push({label:'ตัวเลือกใหม่',type:'select',options:['ตัวเลือก 1','ตัวเลือก 2']});renderEditor();renderPreview()">＋ เพิ่มช่อง</button>`}
+function fieldSet(i,k,v){cur().blocks[selected].fields[i][k]=v;renderPreview();renderEditor()}
+function mediaEditor(b){return `<label>URL ไฟล์ (ถ้ามี)</label><input value="${esc(b.url)}" onchange="setB('url',this.value)"><label>อัปโหลดไฟล์</label><input type=file accept="${b.type==='video'?'video/*':b.type==='image'?'image/*':'image/*,video/*'}" onchange="uploadMedia(this.files[0])"><label>ข้อความกำกับ</label><input value="${esc(b.caption||'')}" onchange="setB('caption',this.value)">`}
+function uploadMedia(f){if(!f)return;readFile(f,url=>{setB('url',url)})}
+function readFile(f,cb){let r=new FileReader();r.onload=()=>cb(r.result);r.readAsDataURL(f)}
+function renderPreview(){let p=document.getElementById('preview');p.style.background=data.bg||'#fff';p.style.color=data.textColor||'#262626';p.style.borderRadius=(data.radius||18)+'px';p.style.fontWeight=data.weight||400;p.innerHTML=`<div class=sitehead><div class=brand>${esc(data.brand||'YOUR ART NAME')}</div><nav class=nav>${data.pages.map((x,i)=>`<a href="#" onclick="goPage(${i});return false" style="color:inherit;text-decoration:none">${esc(x.name)}</a>`).join('')}</nav></div><div class=sitebody style="padding:${data.padding||18}px">${cur().blocks.map((b,i)=>blockHTML(b,i)).join('')}</div>`}
+function blockHTML(b,i){let l=b.layout||{},style=`width:${l.width||100}%;text-align:${l.align||'left'};margin:${l.margin||10}px auto;padding:${l.pad||5}px;background:${l.bg||'transparent'};border:${l.borderWidth||0}px solid ${l.border||'#ddd'};border-radius:${l.radius||8}px;font-size:${l.size||24}px;height:${l.height?l.height+'px':'auto'};`;
+let inner='';if(b.type==='heading')inner=`<h${b.level||2} style="font-size:inherit">${esc(b.text)}</h${b.level||2}>`;if(b.type==='text')inner=`<p style="font-size:inherit;white-space:pre-wrap">${esc(b.text)}</p>`;
+if(b.type==='button')inner=`<button style="background:${b.color||data.accent||'#222'};color:${b.textColor||'#fff'};border:0;border-radius:${b.radius||10}px;font-size:inherit" onclick="if('${esc(b.url)}'.startsWith('#')){document.getElementById('order')?.scrollIntoView()}else window.open('${esc(b.url)}','_blank')">${esc(b.text)}</button>`;
+if(b.type==='gallery')inner=`<h3>YCH Catalog</h3><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px">${(b.items||[]).map(it=>`<article style="border:1px solid #ddd;border-radius:12px;overflow:hidden;text-align:left;font-size:16px"><div style="aspect-ratio:1;background:#f5f5f5">${it.url?`<img src="${it.url}" style="width:100%;height:100%;object-fit:contain">`:`<div style="padding:10px;color:#bbb">${esc(it.title)}</div>`}</div><div style="padding:10px"><b>${esc(it.title)}</b><div>${esc(it.price)} ฿</div></div></article>`).join('')}</div>`;
+if(b.type==='form')inner=`<div id="order"><h3>${esc(b.title||'แบบฟอร์มสั่งงาน')}</h3>${(b.fields||[]).map(f=>`<label>${esc(f.label)}<div class=choice>${f.type==='textarea'?'<textarea rows=3></textarea>':f.type==='select'?`<select><option>เลือก...</option>${(f.options||[]).map(o=>`<option>${esc(o)}</option>`).join('')}</select>`:['radio','checkbox'].includes(f.type)?(f.options||[]).map(o=>`<label><input type="${f.type}" name="${esc(f.label)}">${esc(o)}</label>`).join(''):'<input type=text>'}</div></label>`).join('')}<button onclick="alert('ตัวอย่างแบบฟอร์ม: โปรดเชื่อมต่อบริการรับข้อมูลก่อนใช้งานจริง')">ส่งแบบฟอร์ม</button></div>`;
+if(b.type==='image')inner=`${b.url?`<img class=media src="${b.url}">`:'<div style="padding:30px;background:#f3f3f3">อัปโหลดรูปในแถบเนื้อหา</div>'}${b.caption?`<small>${esc(b.caption)}</small>`:''}`;
+if(b.type==='video')inner=`${b.url?`<video class=video src="${b.url}" controls style="width:100%;max-height:600px"></video>`:'<div style="padding:30px;background:#f3f3f3">อัปโหลดวิดีโอ/GIF หรือใส่ URL</div>'}${b.caption?`<small>${esc(b.caption)}</small>`:''}`;
+if(b.type==='decor')inner=b.url?`<img src="${b.url}" style="width:100%;object-fit:contain">`:`<div style="width:80px;height:80px;border-radius:50%;background:${l.bg||'#ddd'};display:inline-block"></div>`;
+return `<div class="pblock ${selected===i?'selected':''}" style="${style}" onclick="selectBlock(${i})">${inner}</div>`}
+function saveDraft(){localStorage.setItem('commissionBuilderTH',JSON.stringify(data));alert('บันทึกงานไว้ในเครื่องนี้แล้ว')}
+function exportSite(){let html='<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Kanit:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet"><title>'+esc(data.brand)+'</title><style>body{font-family:Kanit,sans-serif;margin:0;padding:20px;background:'+data.bg+';color:'+data.textColor+';font-weight:'+data.weight+'}button{font:inherit;padding:10px 18px;border-radius:10px;border:0}img,video{max-width:100%}</style></head><body>'+document.getElementById('preview').innerHTML+'</body></html>';let blob=new Blob([html],{type:'text/html'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='commission-site.html';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+renderEditor();renderPreview();
+</script>
+</body></html>
